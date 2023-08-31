@@ -27,6 +27,7 @@
       const REMOVE_GOAL = "REMOVE_GOAL";
       const RECEIVE_DATA = "RECEIVE_DATA";
 
+      // reducer
       function todos(state = [], action) {
         switch (action.type) {
           case ADD_TODO:
@@ -40,7 +41,7 @@
                 : Object.assign({}, todo, { complete: !todo.complete })
             );
           case RECEIVE_DATA:
-              return action.todos
+            return action.todos;
           default:
             return state;
         }
@@ -53,12 +54,22 @@
           case REMOVE_GOAL:
             return state.filter((goal) => goal.id !== action.id);
           case RECEIVE_DATA:
-              return action.goals
+            return action.goals;
           default:
             return state;
         }
       }
 
+      function loading(state = true, action) {
+        switch (action.type) {
+          case RECEIVE_DATA:
+            return false;
+          default:
+            return true;
+        }
+      }
+
+      // middleware
       const logger = (store) => (next) => (action) => {
         console.group(action.type);
         console.log("The action:", action);
@@ -84,6 +95,7 @@
         Redux.combineReducers({
           todos,
           goals,
+          loading,
         }),
         Redux.applyMiddleware(checker, logger)
       );
@@ -128,7 +140,7 @@
           type: RECEIVE_DATA,
           todos,
           goals,
-        }
+        };
       }
     </script>
     <script type="text/babel">
@@ -233,7 +245,10 @@
             setValue((value) => value + 1);
           });
         }, []);
-        const { todos, goals } = props.store.getState();
+        const { todos, goals, loading } = props.store.getState();
+        if (loading) {
+          return <h3>Loading</h3>
+        }
         return (
           <div>
             <Todos todos={todos} store={props.store} />
