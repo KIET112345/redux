@@ -239,21 +239,27 @@
       };
 
       const Todos = (props) => {
+        const [todo, setTodo] = React.useState('');
+        const handleOnchangeInput = (e) => {
+          setTodo(e.target.value);
+        }
         const inputRef = React.useRef();
         const addItem = (e) => {
           e.preventDefault();
-          const name = inputRef.current.value;
-          inputRef.current.value = '';
+          
+          // const name = inputRef.current.value;
+          // inputRef.current.value = '';
           props.store.dispatch(addTodoAction({
-            name,
+            name: todo,
             complete: false,
             id: generateId(),
           }))
+          setTodo('');
         }
         return (
           <div>
             <h1>Todo List</h1>
-            <input type="text" placeholder="Add Todo" ref={inputRef} />
+            <input type="text" placeholder="Add Todo" ref={inputRef} onChange={handleOnchangeInput} value={todo}/>
             <button onClick={addItem}>Add Todo</button>
             <List />
           </div>
