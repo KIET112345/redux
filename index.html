@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/react@17.0.2/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@17.0.2/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone@7.17.6/babel.min.js"></script>
+    <script src="https://tylermcginnis.com/goals-todos-api/index.js"></script>
   </head>
   <body>
     <div id="app"></div>
@@ -24,6 +25,7 @@
       const TOGGLE_TODO = "TOGGLE_TODO";
       const ADD_GOAL = "ADD_GOAL";
       const REMOVE_GOAL = "REMOVE_GOAL";
+      const RECEIVE_DATA = "RECEIVE_DATA";
 
       function todos(state = [], action) {
         switch (action.type) {
@@ -37,6 +39,8 @@
                 ? todo
                 : Object.assign({}, todo, { complete: !todo.complete })
             );
+          case RECEIVE_DATA:
+              return action.todos
           default:
             return state;
         }
@@ -48,6 +52,8 @@
             return state.concat([action.goal]);
           case REMOVE_GOAL:
             return state.filter((goal) => goal.id !== action.id);
+          case RECEIVE_DATA:
+              return action.goals
           default:
             return state;
         }
@@ -116,6 +122,14 @@
           id,
         };
       }
+
+      function receiDataAction(todos, goals) {
+        return {
+          type: RECEIVE_DATA,
+          todos,
+          goals,
+        }
+      }
     </script>
     <script type="text/babel">
       const List = (props) => {
@@ -123,7 +137,12 @@
           <ul>
             {props.items.map((item) => (
               <li key={item.id}>
-                <span onClick={() => props.toggle && props.toggle(item)} style={{textDecoration: item.complete ? "line-through" : "none"}}>
+                <span
+                  onClick={() => props.toggle && props.toggle(item)}
+                  style={{
+                    textDecoration: item.complete ? "line-through" : "none",
+                  }}
+                >
                   {item.name}
                 </span>
                 <button
@@ -205,6 +224,11 @@
       const App = (props) => {
         const [value, setValue] = React.useState(0);
         React.useEffect(() => {
+          Promise.all([API.fetchTodos(), API.fetchGoals()]).then(
+            ([todos, goals]) => {
+              props.store.dispatch(receiDataAction(todos, goals));
+            }
+          );
           props.store.subscribe(() => {
             setValue((value) => value + 1);
           });
