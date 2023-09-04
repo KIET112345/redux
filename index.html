@@ -65,7 +65,7 @@
           case RECEIVE_DATA:
             return false;
           default:
-            return true;
+            return state;
         }
       }
 
@@ -177,20 +177,27 @@
         };
         const removeItem = (todo) => {
           props.store.dispatch(removeTodoAction(todo.id));
+          return API.deleteTodo(todo.id).catch((error) => {
+            props.store.dispatch(addTodoAction(todo));
+            alert(`An error ${error} occurred. Try again`)
+          })
         };
         const toggleItem = (todo) => {
           props.store.dispatch(toggleTodoAction(todo.id));
+          return API.saveTodoToggle(todo.id).catch((error) => {
+            props.store.dispatch(toggleTodoAction(todo.id));
+            alert(`An error ${error} occurred. Try again`)
+          });
         };
         const addItem = (e) => {
           e.preventDefault();
-          props.store.dispatch(
-            addTodoAction({
-              name: todo,
-              complete: false,
-              id: generateId(),
-            })
-          );
-          setTodo("");
+          return API.saveTodo(todo)
+          .then(todo => {
+            props.store.dispatch(addTodoAction(todo));
+            setTodo("");
+          })
+          .catch( () => alert(`There was an error. Try again`))
+         
         };
         return (
           <div>
@@ -211,17 +218,17 @@
         const inputRef = React.useRef();
         const removeItem = (goal) => {
           props.store.dispatch(removeGoalAction(goal.id));
+          return API.deleteGoal(goal.id).catch(() => {
+            prop.store.dispatch(addGoalAction(goal));
+          })
         };
         const addItem = (e) => {
           e.preventDefault();
-          const name = inputRef.current.value;
-          inputRef.current.value = "";
-          props.store.dispatch(
-            addGoalAction({
-              name,
-              id: generateId(),
-            })
-          );
+          return API.saveGoal(inputRef.current.value).then((goal) => {
+            props.store.dispatch(addGoalAction(goal));
+            inputRef.current.value = '';
+          })
+          .catch(() => alert('There was an error. Try again.'));
         };
         return (
           <div>
@@ -246,7 +253,7 @@
           });
         }, []);
         const { todos, goals, loading } = props.store.getState();
-        if (loading) {
+        if (loading === true) {
           return <h3>Loading</h3>
         }
         return (
