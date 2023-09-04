@@ -151,6 +151,27 @@
         };
       }
 
+      function handleAddTodo(todo, cb) {
+        return (dispatch) => {
+          return API.saveTodo(todo)
+            .then((todo) => {
+              dispatch(addTodoAction(todo));
+              cb();
+            })
+            .catch(() => alert(`There was an error. Try again`));
+        };
+      }
+
+      function handleToggleTodo(id) {
+        return (dispatch) => {
+          dispatch(toggleTodoAction(id));
+          return API.saveTodoToggle(id).catch((error) => {
+            dispatch(toggleTodoAction(id));
+            alert(`An error ${error} occurred. Try again`);
+          });
+        };
+      }
+
       function handleDeleteTodo(todo) {
         return (dispatch) => {
           dispatch(removeTodoAction(todo.id));
@@ -179,6 +200,16 @@
           return API.deleteGoal(goal.id).catch(() => {
             dispatch(addGoalAction(goal));
           });
+        };
+      }
+
+      function handleInitialData() {
+        return (dispatch) => {
+          Promise.all([API.fetchTodos(), API.fetchGoals()]).then(
+            ([todos, goals]) => {
+              dispatch(receiDataAction(todos, goals));
+            }
+          );
         };
       }
     </script>
@@ -218,20 +249,11 @@
           props.store.dispatch(handleDeleteTodo(todo));
         };
         const toggleItem = (todo) => {
-          props.store.dispatch(toggleTodoAction(todo.id));
-          return API.saveTodoToggle(todo.id).catch((error) => {
-            props.store.dispatch(toggleTodoAction(todo.id));
-            alert(`An error ${error} occurred. Try again`);
-          });
+          props.store.dispatch(handleToggleTodo(todo.id));
         };
         const addItem = (e) => {
           e.preventDefault();
-          return API.saveTodo(todo)
-            .then((todo) => {
-              props.store.dispatch(addTodoAction(todo));
-              setTodo("");
-            })
-            .catch(() => alert(`There was an error. Try again`));
+          props.store.dispatch(handleAddTodo(todo, () => setTodo("")));
         };
         return (
           <div>
@@ -275,11 +297,7 @@
       const App = (props) => {
         const [value, setValue] = React.useState(0);
         React.useEffect(() => {
-          Promise.all([API.fetchTodos(), API.fetchGoals()]).then(
-            ([todos, goals]) => {
-              props.store.dispatch(receiDataAction(todos, goals));
-            }
-          );
+          props.store.dispatch(handleInitialData());
           props.store.subscribe(() => {
             setValue((value) => value + 1);
           });
