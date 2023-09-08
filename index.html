@@ -246,14 +246,14 @@
           setTodo(e.target.value);
         };
         const removeItem = (todo) => {
-          props.store.dispatch(handleDeleteTodo(todo));
+          props.dispatch(handleDeleteTodo(todo));
         };
         const toggleItem = (todo) => {
-          props.store.dispatch(handleToggleTodo(todo.id));
+          props.dispatch(handleToggleTodo(todo.id));
         };
         const addItem = (e) => {
           e.preventDefault();
-          props.store.dispatch(handleAddTodo(todo, () => setTodo("")));
+          props.dispatch(handleAddTodo(todo, () => setTodo("")));
         };
         return (
           <div>
@@ -273,11 +273,11 @@
       const Goals = (props) => {
         const inputRef = React.useRef();
         const removeItem = (goal) => {
-          props.store.dispatch(handleRemoveGoal(goal));
+          props.dispatch(handleRemoveGoal(goal));
         };
         const addItem = (e) => {
           e.preventDefault();
-          props.store.dispatch(
+          props.dispatch(
             handleAddGoal(
               inputRef.current.value,
               () => (inputRef.current.value = "")
@@ -308,12 +308,53 @@
         }
         return (
           <div>
-            <Todos todos={todos} store={props.store} />
-            <Goals goals={goals} store={props.store} />
+            <ConnectedTodos/>
+            <ConnectedGoals/>
           </div>
         );
       };
-      ReactDOM.render(<App store={store} />, document.getElementById("app"));
+      const ConnectedTodos = () => {
+        return (
+          <Context.Consumer>
+            {
+              (store) => {
+                const { todos } = store.getState();
+                return <Todos todos={todos} dispatch={store.dispatch}/>
+              }
+            }
+          </Context.Consumer>
+        )
+      }
+      const ConnectedGoals = () => {
+        return (
+          <Context.Consumer>
+            {
+              (store) => {
+                const {goals} = store.getState();
+                return <Goals goals={goals} dispatch={store.dispatch} />
+              }
+            }
+          </Context.Consumer>
+        )
+      }
+      const ConnectedApp = () => {
+        return (
+          <Context.Consumer>
+            {(store) => {
+              return <App store={store}/>
+            }}
+          </Context.Consumer>
+        )
+      }
+      const Context = React.createContext();
+      const Provider = (props) => {
+        return (
+          <Context.Provider value={props.store}>
+            {props.children}
+          </Context.Provider>
+        )
+      }
+      ReactDOM.render(<Provider store={store}><ConnectedApp /></Provider>, document.getElementById("app"));
     </script>
   </body>
 </html>
