@@ -295,66 +295,77 @@
       };
 
       const App = (props) => {
-        const [value, setValue] = React.useState(0);
         React.useEffect(() => {
-          props.store.dispatch(handleInitialData());
-          props.store.subscribe(() => {
-            setValue((value) => value + 1);
-          });
+          props.dispatch(handleInitialData());
         }, []);
-        const { todos, goals, loading } = props.store.getState();
-        if (loading === true) {
+        if (props.loading === true) {
           return <h3>Loading</h3>;
         }
         return (
           <div>
-            <ConnectedTodos/>
-            <ConnectedGoals/>
+            <ConnectedTodos />
+            <ConnectedGoals />
           </div>
         );
       };
-      const ConnectedTodos = () => {
-        return (
-          <Context.Consumer>
-            {
-              (store) => {
-                const { todos } = store.getState();
-                return <Todos todos={todos} dispatch={store.dispatch}/>
-              }
-            }
-          </Context.Consumer>
-        )
+
+      const ConnectedTodos = connect((state) => ({
+        todos: state.todos,
+      }))(Todos);
+
+      const ConnectedGoals = connect((state) => ({
+        goals: state.goals,
+      }))(Goals);
+
+      const ConnectedApp = connect((state) => ({
+        loading: state.loading,
+      }))(App);
+
+      function connect(mapStateToProps) {
+        return (Component) => {
+          const Receiver = (props) => {
+            let unmounted = false;
+            const [value, setValue] = React.useState(0);
+            React.useEffect(() => {
+              const { subscribe } = props.store;
+              const unsubscribe = subscribe(() => {
+                setValue((value) => value + 1);
+              });
+              return () => {
+                unsubscribe();
+                unmounted = true;
+              };
+            }, []);
+            const { dispatch, getState } = props.store;
+            const state = getState();
+            const stateNeeded = mapStateToProps(state);
+            return <Component {...stateNeeded} dispatch={dispatch} />;
+          };
+          const ConnectedComponent = () => {
+            return (
+              <Context.Consumer>
+                {(store) => <Receiver store={store} />}
+              </Context.Consumer>
+            );
+          };
+          return ConnectedComponent;
+        };
       }
-      const ConnectedGoals = () => {
-        return (
-          <Context.Consumer>
-            {
-              (store) => {
-                const {goals} = store.getState();
-                return <Goals goals={goals} dispatch={store.dispatch} />
-              }
-            }
-          </Context.Consumer>
-        )
-      }
-      const ConnectedApp = () => {
-        return (
-          <Context.Consumer>
-            {(store) => {
-              return <App store={store}/>
-            }}
-          </Context.Consumer>
-        )
-      }
+
       const Context = React.createContext();
       const Provider = (props) => {
         return (
           <Context.Provider value={props.store}>
             {props.children}
           </Context.Provider>
-        )
-      }
-      ReactDOM.render(<Provider store={store}><ConnectedApp /></Provider>, document.getElementById("app"));
+        );
+      };
+      ReactDOM.render(
+        <Provider store={store}>
+          <ConnectedApp />
+        </Provider>,
+        document.getElementById("app")
+      );
     </script>
   </body>
 </html>
